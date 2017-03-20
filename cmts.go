@@ -16,17 +16,18 @@ func lsb(val uint64) (r uint64) {
 	return 64 - r
 }
 
-// Sketch ...
+// Sketch is Count-Min-Tree Sketch
 type Sketch struct {
 	barrier  []*bitset.BitSet
 	counting []*bitset.BitSet
-	spire    uint64
 	nblayer  uint64
 	baseSize uint64
+	spire    uint64
 }
 
-// New ...
-func New(baseSize uint, spire uint64) *Sketch {
+// New returns a Count-Min-Tree Sketch for a given baseSize in bits
+// the baseSize results in a sketch of the size 2*((2*baseSize)-1) due to the barrier bits
+func New(baseSize uint) *Sketch {
 	nblayer := uint64(math.Log2(float64(baseSize))) + 1
 	barrier := make([]*bitset.BitSet, nblayer, nblayer)
 	counting := make([]*bitset.BitSet, nblayer, nblayer)
@@ -41,7 +42,6 @@ func New(baseSize uint, spire uint64) *Sketch {
 	return &Sketch{
 		barrier:  barrier,
 		counting: counting,
-		spire:    uint64(spire),
 		nblayer:  nblayer,
 		baseSize: origBaseSize,
 	}
@@ -53,7 +53,7 @@ func (sketch *Sketch) getPos(val []byte) uint {
 	return pos
 }
 
-// Increment ...
+// Increment the counter for val in the sketch
 func (sketch *Sketch) Increment(val []byte) {
 	pos := sketch.getPos(val)
 	sketch.encode(pos)
@@ -99,7 +99,7 @@ func (sketch *Sketch) encode(pos uint) {
 	//fmt.Println("spire:", sketch.spire)
 }
 
-// Get ...
+// Get returns the frequency of val in the sketch
 func (sketch *Sketch) Get(val []byte) uint64 {
 	pos := sketch.getPos(val)
 	return sketch.decode(pos)
