@@ -18,11 +18,12 @@ func lsb(val uint64) (r uint64) {
 
 // Sketch is Count-Min-Tree Sketch
 type Sketch struct {
-	barrier  []*bitset.BitSet
-	counting []*bitset.BitSet
-	nblayer  uint64
-	baseSize uint64
-	spire    uint64
+	barrier   []*bitset.BitSet
+	counting  []*bitset.BitSet
+	nblayer   uint64
+	baseSize  uint64
+	totalSize uint64
+	spire     uint64
 }
 
 // New returns a Count-Min-Tree Sketch for a given baseSize in bits
@@ -33,18 +34,27 @@ func New(baseSize uint) *Sketch {
 	counting := make([]*bitset.BitSet, nblayer, nblayer)
 	origBaseSize := uint64(baseSize)
 
+	totalSize := uint64(64)
+
 	for i := uint64(0); i < nblayer; i++ {
 		barrier[i] = bitset.New(baseSize)
 		counting[i] = bitset.New(baseSize)
-		baseSize /= 2
+		totalSize += uint64(baseSize * 2)
+		baseSize = baseSize * 183 / 240
 	}
 
 	return &Sketch{
-		barrier:  barrier,
-		counting: counting,
-		nblayer:  nblayer,
-		baseSize: origBaseSize,
+		barrier:   barrier,
+		counting:  counting,
+		nblayer:   nblayer,
+		baseSize:  origBaseSize,
+		totalSize: totalSize,
 	}
+}
+
+// Size ...
+func (sketch *Sketch) Size() uint64 {
+	return sketch.totalSize / 8
 }
 
 func (sketch *Sketch) getPos(val []byte) uint {
